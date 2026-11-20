@@ -49,27 +49,39 @@ async def get_all_analytics():
         })
 
     # 2. Transaction Amount Distribution (Log10 bins)
-    amounts = np.clip(df['amount'].values, 1.0, 1e7)
-    log_amts = np.log10(amounts)
-    
-    bins = np.linspace(1, 6, 21) # 10^1 to 10^6
-    bin_labels = [f"₹{int(10**b):,}" for b in bins[:-1]]
-    
+    bins = [10, 30, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000]
+    bin_labels = [
+        "₹10–₹30",
+        "₹30–₹100",
+        "₹100–₹300",
+        "₹300–₹1k",
+        "₹1k–₹3k",
+        "₹3k–₹10k",
+        "₹10k–₹30k",
+        "₹30k–₹100k",
+        "₹100k–₹300k",
+        "₹300k+"
+    ]
+    amounts = df['amount'].fillna(0).values
     amount_distribution = []
-    for i in range(len(bins) - 1):
-        b_low, b_high = bins[i], bins[i+1]
-        mask = (log_amts >= b_low) & (log_amts < b_high)
+    for i in range(len(bins)):
+        b_low = bins[i]
+        b_high = bins[i+1] if i + 1 < len(bins) else 1e9
+        lbl = bin_labels[i]
+        mask = (amounts >= b_low) & (amounts < b_high) if i + 1 < len(bins) else (amounts >= b_low)
         if has_labels:
             n_amt = int(((df['is_fraud'] == 0) & mask).sum())
             f_amt = int(((df['is_fraud'] == 1) & mask).sum())
         else:
             n_amt = int(mask.sum())
             f_amt = 0
+        tot = n_amt + f_amt
         amount_distribution.append({
-            "range": f"₹{int(10**b_low):,} - ₹{int(10**b_high):,}",
+            "range": lbl,
+            "count": tot,
+            "total": tot,
             "normal": n_amt,
-            "fraud": f_amt,
-            "total": n_amt + f_amt
+            "fraud": f_amt
         })
 
     # 3. Transaction Type Vulnerability

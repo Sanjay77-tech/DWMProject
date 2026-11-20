@@ -7,7 +7,8 @@ import {
   Terminal, 
   Sliders, 
   Trophy,
-  AlertOctagon
+  AlertOctagon,
+  Info
 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -39,6 +40,7 @@ export const ModelTrainingPage: React.FC = () => {
   // Benchmark suite state
   const [benchmarkLoading, setBenchmarkLoading] = useState(false);
   const [benchmarkResults, setBenchmarkResults] = useState<any[] | null>(null);
+  const [benchmarkNotice, setBenchmarkNotice] = useState<string | null>(null);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -80,23 +82,31 @@ export const ModelTrainingPage: React.FC = () => {
   useEffect(() => {
     if (!jobId || jobStatus === 'completed' || jobStatus === 'failed') return;
 
-    const interval = setInterval(async () => {
+    let failCount = 0;
+    const pollStatus = async () => {
       try {
         const statusData = await api.getTrainingStatus(jobId);
+        failCount = 0;
         setJobStatus(statusData.status);
         setJobProgress(statusData.progress || 0);
         setJobLogs(statusData.logs || []);
         if (statusData.status === 'completed') {
           setJobResult(statusData.result);
-          clearInterval(interval);
         } else if (statusData.status === 'failed') {
           setJobError(statusData.error || "Training failed.");
-          clearInterval(interval);
         }
       } catch (err: any) {
+        failCount++;
         console.error("Polling error", err);
+        if (failCount >= 3) {
+          setJobStatus('failed');
+          setJobError(err.message || "Failed to communicate with training executor.");
+        }
       }
-    }, 1000);
+    };
+
+    pollStatus();
+    const interval = setInterval(pollStatus, 1000);
 
     return () => clearInterval(interval);
   }, [jobId, jobStatus]);
@@ -145,9 +155,13 @@ export const ModelTrainingPage: React.FC = () => {
 
   const handleRunBenchmarkSuite = async () => {
     setBenchmarkLoading(true);
+    setBenchmarkNotice(null);
     try {
       const res = await api.runBenchmarkSuite();
-      setBenchmarkResults(res.comparison || []);
+      setBenchmarkResults(res.benchmark_table || res.comparison || []);
+      if (res.notice_message) {
+        setBenchmarkNotice(res.notice_message);
+      }
     } catch (err: any) {
       alert(`Benchmark Suite Error: ${err.message}`);
     } finally {
@@ -544,6 +558,22 @@ export const ModelTrainingPage: React.FC = () => {
       {/* Model Evaluation Results Section (Visible on Completion) */}
       {jobResult && (
         <div className="space-y-6 animate-fadeIn">
+          {/* Single Class / Small Sample Notice Banner */}
+          {(jobResult.single_class_notice || (jobResult.metrics && jobResult.metrics.true_positives === 0 && jobResult.metrics.false_negatives === 0)) && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-200 text-xs">
+              <Info className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="font-semibold text-amber-300">Why are all metrics 100% or 0%? (Single-Class Holdout Notice)</div>
+                <p className="text-slate-300 leading-relaxed">
+                  In this dataset, the chronological holdout test window (the final 15% of transactions) contains 0 fraud instances because all fraud attempts occurred earlier in the timeline. All 5 test transactions are legitimate, so every model correctly cleared them (100% Accuracy, 5 True Negatives).
+                </p>
+                <p className="text-amber-400/90 font-medium pt-1">
+                  💡 Recommendation: To evaluate multi-model trade-offs, false alarms, and ROC curves across both classes, load the 7,500-sample UPI Benchmark Dataset from the Dataset Upload page.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Metrics Strip */}
           {jobResult.metrics && (
             <div>
@@ -701,6 +731,13 @@ export const ModelTrainingPage: React.FC = () => {
             Side-by-side empirical performance across all algorithms on identical chronological holdout data.
           </p>
 
+          {benchmarkNotice && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-amber-200 text-xs">
+              <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <span>{benchmarkNotice}</span>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-navy-900/80 text-slate-400 uppercase text-[10px] font-semibold border-b border-navy-700">
@@ -714,16 +751,24 @@ export const ModelTrainingPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-navy-700/60 font-mono text-[11px]">
-                {benchmarkResults.map((m: any, idx: number) => (
-                  <tr key={idx} className="hover:bg-navy-700/30 transition-colors">
-                    <td className="py-3 px-4 font-sans font-medium text-white">{m.model}</td>
-                    <td className="py-3 px-4 text-emerald-400 font-bold">{(m.f1_score * 100).toFixed(2)}%</td>
-                    <td className="py-3 px-4 text-cyan-400">{(m.recall * 100).toFixed(2)}%</td>
-                    <td className="py-3 px-4 text-slate-300">{(m.precision * 100).toFixed(2)}%</td>
-                    <td className="py-3 px-4 text-slate-300">{m.roc_auc ? `${(m.roc_auc * 100).toFixed(2)}%` : 'N/A'}</td>
-                    <td className="py-3 px-4 text-slate-400">{(m.accuracy * 100).toFixed(2)}%</td>
-                  </tr>
-                ))}
+                {benchmarkResults.map((m: any, idx: number) => {
+                  const modelName = m.model || m.Model || m['index'] || 'Algorithm';
+                  const f1 = m.f1_score ?? m['F1-Score'] ?? 0;
+                  const rec = m.recall ?? m['Recall'] ?? 0;
+                  const prec = m.precision ?? m['Precision'] ?? 0;
+                  const roc = m.roc_auc ?? m['ROC-AUC'];
+                  const acc = m.accuracy ?? m['Accuracy'] ?? 0;
+                  return (
+                    <tr key={idx} className="hover:bg-navy-700/30 transition-colors">
+                      <td className="py-3 px-4 font-sans font-medium text-white">{modelName}</td>
+                      <td className="py-3 px-4 text-emerald-400 font-bold">{(f1 * 100).toFixed(2)}%</td>
+                      <td className="py-3 px-4 text-cyan-400">{(rec * 100).toFixed(2)}%</td>
+                      <td className="py-3 px-4 text-slate-300">{(prec * 100).toFixed(2)}%</td>
+                      <td className="py-3 px-4 text-slate-300">{roc !== null && roc !== undefined ? `${(roc * 100).toFixed(2)}%` : 'N/A'}</td>
+                      <td className="py-3 px-4 text-slate-400">{(acc * 100).toFixed(2)}%</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -35,26 +35,48 @@ export const TransactionPredictionPage: React.FC = () => {
     new_balance: 14150.0,
   });
 
+  const handleApplyPreset = async (preset: any) => {
+    setSelectedPresetId(preset.id);
+    const presetData = preset.data || preset.payload || {};
+    const updatedForm = {
+      ...formData,
+      ...presetData,
+    };
+    setFormData(updatedForm);
+    setAnalyzing(true);
+    setError(null);
+    try {
+      const response = await api.analyzeTransaction(updatedForm);
+      setPredictionResult(response.report);
+    } catch (err: any) {
+      setError(err.message || "Failed to analyze transaction.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   useEffect(() => {
     const fetchPresets = async () => {
       try {
         const data = await api.getPresets();
-        setPresets(data.presets || []);
+        const pList = data.presets || [];
+        setPresets(pList);
+        if (pList.length > 0) {
+          const first = pList[0];
+          setSelectedPresetId(first.id);
+          const firstData = first.data || first.payload || {};
+          const initialForm = { ...formData, ...firstData };
+          setFormData(initialForm);
+          api.analyzeTransaction(initialForm).then(res => {
+            setPredictionResult(res.report);
+          }).catch(() => {});
+        }
       } catch (err) {
         console.error("Failed to load presets", err);
       }
     };
     fetchPresets();
   }, []);
-
-  const handleApplyPreset = (preset: any) => {
-    setSelectedPresetId(preset.id);
-    setFormData({
-      ...formData,
-      ...preset.payload,
-    });
-    setPredictionResult(null);
-  };
 
   const handleInputChange = (field: string, value: any) => {
     setSelectedPresetId(null);

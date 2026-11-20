@@ -41,12 +41,20 @@ def evaluate_classification_model(
     # AUC metrics
     roc_auc = None
     pr_auc = None
-    if y_prob is not None:
+    if y_prob is not None and len(np.unique(y_true)) >= 2:
         try:
-            roc_auc = float(roc_auc_score(y_true, y_prob))
-            pr_auc = float(average_precision_score(y_true, y_prob))
+            val_roc = float(roc_auc_score(y_true, y_prob))
+            if not np.isnan(val_roc):
+                roc_auc = round(val_roc, 4)
         except Exception:
-            pass
+            roc_auc = None
+
+        try:
+            val_pr = float(average_precision_score(y_true, y_prob))
+            if not np.isnan(val_pr):
+                pr_auc = round(val_pr, 4)
+        except Exception:
+            pr_auc = None
             
     metrics = {
         'model_name': model_name,
@@ -54,8 +62,8 @@ def evaluate_classification_model(
         'precision': round(prec, 4),
         'recall': round(rec, 4),
         'f1_score': round(f1, 4),
-        'roc_auc': round(roc_auc, 4) if roc_auc is not None else 'N/A',
-        'pr_auc': round(pr_auc, 4) if pr_auc is not None else 'N/A',
+        'roc_auc': roc_auc,
+        'pr_auc': pr_auc,
         'false_positive_rate': round(fpr, 4),
         'false_negative_rate': round(fnr, 4),
         'true_positives': int(tp),

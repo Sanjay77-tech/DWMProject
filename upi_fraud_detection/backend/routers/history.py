@@ -92,19 +92,29 @@ async def get_history_records(
         
     filtered = df_history.copy()
     
-    if risk_category and risk_category != "All":
-        filtered = filtered[filtered['risk_category'] == risk_category]
+    if risk_category and risk_category not in ["All", "", "all"]:
+        cat_clean = risk_category.strip().lower()
+        if "very high" in cat_clean or "critical" in cat_clean:
+            filtered = filtered[filtered['risk_score'] > 80]
+        elif "high" in cat_clean:
+            filtered = filtered[(filtered['risk_score'] > 60) & (filtered['risk_score'] <= 80)]
+        elif "med" in cat_clean:
+            filtered = filtered[(filtered['risk_score'] > 30) & (filtered['risk_score'] <= 60)]
+        elif "low" in cat_clean:
+            filtered = filtered[filtered['risk_score'] <= 30]
+        else:
+            filtered = filtered[filtered['risk_category'].astype(str).str.lower().str.contains(cat_clean, na=False)]
         
     if min_amount and min_amount > 0:
         filtered = filtered[filtered['amount'] >= min_amount]
         
     if search_query:
-        q = search_query.lower()
+        q = search_query.strip().lower()
         filtered = filtered[
-            filtered['sender_id'].str.lower().str.contains(q) |
-            filtered['receiver_id'].str.lower().str.contains(q) |
-            filtered['transaction_id'].str.lower().str.contains(q) |
-            filtered['top_reason'].str.lower().str.contains(q)
+            filtered['sender_id'].astype(str).str.lower().str.contains(q, na=False) |
+            filtered['receiver_id'].astype(str).str.lower().str.contains(q, na=False) |
+            filtered['transaction_id'].astype(str).str.lower().str.contains(q, na=False) |
+            filtered['top_reason'].astype(str).str.lower().str.contains(q, na=False)
         ]
         
     total_matches = len(filtered)
@@ -115,12 +125,14 @@ async def get_history_records(
     
     return {
         "total": total_matches,
+        "total_matched": total_matches,
         "page": page,
         "page_size": page_size,
-        "total_pages": int(np.ceil(total_matches / page_size)),
+        "total_pages": int(np.ceil(total_matches / page_size)) if total_matches > 0 else 1,
         "records": paged_records
     }
 
+@router.get("/export")
 @router.get("/export-csv")
 async def export_history_csv():
     df_history = compile_all_history()

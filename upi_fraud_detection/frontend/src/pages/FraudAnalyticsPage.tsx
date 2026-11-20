@@ -177,7 +177,7 @@ export const FraudAnalyticsPage: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={amount_distribution} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="range" stroke="#64748b" fontSize={9} tickLine={false} interval={2} />
+                  <XAxis dataKey="range" stroke="#64748b" fontSize={9} tickLine={false} interval={0} />
                   <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
                   <Tooltip
                     contentStyle={{
@@ -187,14 +187,24 @@ export const FraudAnalyticsPage: React.FC = () => {
                       color: '#f8fafc',
                       fontSize: '12px',
                     }}
+                    formatter={(val: any, name: any) => [`${Number(val).toLocaleString()} txns`, name]}
                   />
                   <Bar 
-                    dataKey="count" 
-                    fill="#38bdf8" 
-                    radius={[4, 4, 0, 0]}
+                    dataKey="normal" 
+                    stackId="a"
+                    fill="#10b981" 
+                    name="Legitimate"
                     animationDuration={1500}
                     animationEasing="ease-out"
-                    name="Transactions"
+                  />
+                  <Bar 
+                    dataKey="fraud" 
+                    stackId="a"
+                    fill="#ef4444" 
+                    radius={[4, 4, 0, 0]}
+                    name="Fraud Incident"
+                    animationDuration={1800}
+                    animationEasing="ease-out"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -202,8 +212,13 @@ export const FraudAnalyticsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between text-xs pt-4 border-t border-navy-700 text-slate-400">
-            <span>Log-Normal Financial Dispersion</span>
-            <span className="font-mono text-[10px] text-slate-500">Clustered Risk</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Legitimate Volume
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-400" /> Fraud Incidents
+            </span>
+            <span className="font-mono text-[10px] text-slate-500">Log-Normal Spectrum</span>
           </div>
         </div>
       </div>

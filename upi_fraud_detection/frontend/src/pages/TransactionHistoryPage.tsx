@@ -28,12 +28,12 @@ export const TransactionHistoryPage: React.FC = () => {
       const data = await api.getHistory({
         risk_category: riskCategory || undefined,
         min_amount: minAmount > 0 ? minAmount : undefined,
-        search_query: searchQuery || undefined,
+        search_query: searchQuery.trim() || undefined,
         page: currentPage,
         page_size: pageSize
       });
       setRecords(data.records || []);
-      setTotalRecords(data.total_matched || 0);
+      setTotalRecords(data.total_matched || data.total || 0);
     } catch (err) {
       console.error("Failed to fetch transaction history", err);
     } finally {
@@ -43,7 +43,7 @@ export const TransactionHistoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [currentPage, riskCategory, minAmount]);
+  }, [currentPage, riskCategory, minAmount, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,10 +114,10 @@ export const TransactionHistoryPage: React.FC = () => {
               className="w-full bg-navy-900 border border-navy-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
             >
               <option value="">All Risk Tiers</option>
-              <option value="LOW">Low Risk (&le; 30)</option>
-              <option value="MEDIUM">Medium Risk (31–60)</option>
-              <option value="HIGH">High Risk (61–80)</option>
-              <option value="VERY HIGH">Very High Risk (&gt; 80)</option>
+              <option value="Low Risk">Low Risk (&le; 30)</option>
+              <option value="Medium Risk">Medium Risk (31–60)</option>
+              <option value="High Risk">High Risk (61–80)</option>
+              <option value="Very High Risk">Very High Risk (&gt; 80)</option>
             </select>
           </div>
 

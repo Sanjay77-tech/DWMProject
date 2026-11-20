@@ -64,9 +64,23 @@ async def get_scenario_presets():
         {
             "id": "normal_merchant",
             "title": "Normal Grocery Payment",
+            "risk": "LOW",
             "category": "legitimate",
             "badge": "🟢 Normal (₹350)",
+            "description": "Routine day-to-day ₹350 merchant QR payment during afternoon hours.",
             "data": {
+                "amount": 350.0,
+                "transaction_type": "PAYMENT",
+                "hour_of_day": 14,
+                "sender_id": "ananya.sharma@okaxis",
+                "receiver_id": "fresh_groceries@paytm",
+                "sender_avg_amt": 420.0,
+                "tx_count_5m": 0, "tx_count_30m": 0, "tx_count_24h": 1,
+                "time_since_prev_min": 180.0,
+                "is_new_recipient": 0, "is_device_changed": 0, "is_location_changed": 0,
+                "failed_attempts": 0, "old_balance": 18500.0, "new_balance": 18150.0
+            },
+            "payload": {
                 "amount": 350.0,
                 "transaction_type": "PAYMENT",
                 "hour_of_day": 14,
@@ -82,9 +96,23 @@ async def get_scenario_presets():
         {
             "id": "midnight_drain",
             "title": "Midnight Account Drain",
+            "risk": "CRITICAL",
             "category": "fraud",
             "badge": "🔴 Midnight Drain (₹85,000)",
+            "description": "High-value ₹85,000 transfer at 3:00 AM draining 98% balance to new mule VPA.",
             "data": {
+                "amount": 85000.0,
+                "transaction_type": "TRANSFER",
+                "hour_of_day": 3,
+                "sender_id": "rahul.verma@oksbi",
+                "receiver_id": "mule_account_99@ybl",
+                "sender_avg_amt": 1200.0,
+                "tx_count_5m": 3, "tx_count_30m": 4, "tx_count_24h": 5,
+                "time_since_prev_min": 1.5,
+                "is_new_recipient": 1, "is_device_changed": 1, "is_location_changed": 1,
+                "failed_attempts": 2, "old_balance": 87000.0, "new_balance": 2000.0
+            },
+            "payload": {
                 "amount": 85000.0,
                 "transaction_type": "TRANSFER",
                 "hour_of_day": 3,
@@ -100,9 +128,23 @@ async def get_scenario_presets():
         {
             "id": "velocity_burst",
             "title": "High-Velocity Micro-Burst",
+            "risk": "HIGH",
             "category": "suspicious",
             "badge": "🟡 Velocity Burst (₹30,000)",
+            "description": "Rapid succession of 4 transfers in under 5 minutes to multiple unverified contacts.",
             "data": {
+                "amount": 30000.0,
+                "transaction_type": "TRANSFER",
+                "hour_of_day": 22,
+                "sender_id": "vikram.singh@icici",
+                "receiver_id": "crypto_exchange_p2p@axis",
+                "sender_avg_amt": 2500.0,
+                "tx_count_5m": 4, "tx_count_30m": 6, "tx_count_24h": 8,
+                "time_since_prev_min": 0.8,
+                "is_new_recipient": 1, "is_device_changed": 0, "is_location_changed": 0,
+                "failed_attempts": 1, "old_balance": 52000.0, "new_balance": 22000.0
+            },
+            "payload": {
                 "amount": 30000.0,
                 "transaction_type": "TRANSFER",
                 "hour_of_day": 22,
@@ -118,9 +160,23 @@ async def get_scenario_presets():
         {
             "id": "phishing_qr",
             "title": "Phishing QR Scam Cash-Out",
+            "risk": "CRITICAL",
             "category": "fraud",
             "badge": "🟠 Phishing QR (₹45,000)",
+            "description": "Immediate cash-out withdrawal following 3 failed PIN attempts from unknown device.",
             "data": {
+                "amount": 45000.0,
+                "transaction_type": "CASH_OUT",
+                "hour_of_day": 18,
+                "sender_id": "priya.nair@hdfc",
+                "receiver_id": "fake_reward_refund@paytm",
+                "sender_avg_amt": 1800.0,
+                "tx_count_5m": 1, "tx_count_30m": 2, "tx_count_24h": 3,
+                "time_since_prev_min": 12.0,
+                "is_new_recipient": 1, "is_device_changed": 1, "is_location_changed": 0,
+                "failed_attempts": 3, "old_balance": 46200.0, "new_balance": 1200.0
+            },
+            "payload": {
                 "amount": 45000.0,
                 "transaction_type": "CASH_OUT",
                 "hour_of_day": 18,
