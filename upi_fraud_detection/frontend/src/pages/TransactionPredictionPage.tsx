@@ -2,15 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   SearchCheck, 
   Sparkles, 
-  ShieldAlert, 
-  ShieldCheck, 
-  AlertCircle, 
-  Layers, 
-  HelpCircle,
-  Clock,
-  ArrowRight,
   Zap,
-  Info
+  AlertOctagon
 } from 'lucide-react';
 import { api } from '../api/client';
 import { RiskScoreGauge } from '../components/RiskScoreGauge';
@@ -140,6 +133,17 @@ export const TransactionPredictionPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Error alert if any */}
+      {error && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-300 text-xs animate-fadeIn">
+          <AlertOctagon className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+          <div>
+            <span className="font-semibold text-red-200">Prediction Error: </span>
+            {error}
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Form & Real-Time Assessment */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -412,7 +416,11 @@ export const TransactionPredictionPage: React.FC = () => {
 
               {/* Gauge and Suggested Action */}
               <div className="flex flex-col items-center justify-center py-2">
-                <RiskScoreGauge score={report.risk_score} category={report.risk_category} />
+                <RiskScoreGauge 
+                  score={report.risk_score} 
+                  category={report.risk_category} 
+                  status={report.prediction_status || 'SUSPECT'}
+                />
                 <div className="mt-4 text-center max-w-xs">
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
                     Operational Action Protocol

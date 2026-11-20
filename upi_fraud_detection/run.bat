@@ -1,17 +1,18 @@
 @echo off
-title UPI Fraud Detection AI Engine
+title UPI Sentinel AI - Fraud Detection Platform
 echo ======================================================================
-echo    UPI SCAM & FRAUD DETECTION AI - STARTING SYSTEM
+echo    UPI SENTINEL AI - FINTECH FRAUD DETECTION PLATFORM
+echo    React.js + FastAPI + Scikit-Learn Engine
 echo ======================================================================
 echo.
-cd /d "C:\Users\Admin\OneDrive\Desktop\DWMProject\upi_fraud_detection"
+cd /d "%~dp0"
 echo Current Directory: %CD%
-echo Launching Streamlit application...
+echo Launching unified application on http://localhost:8000 ...
 echo.
-py -m streamlit run app.py
+py run.py
 if errorlevel 1 (
     echo.
     echo Trying fallback python command...
-    python -m streamlit run app.py
+    python run.py
 )
 pause

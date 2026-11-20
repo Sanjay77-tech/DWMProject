@@ -5,12 +5,16 @@ Powers the React frontend with asynchronous ML, XAI, and behavioral analysis API
 
 import os
 import sys
+from pathlib import Path
 
 # Ensure project root is in sys.path
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from backend.routers import dataset, dashboard, prediction, analytics, training, history
 
@@ -44,6 +48,23 @@ async def health_check():
         "engine": "UPI Sentinel AI (FastAPI)",
         "version": "2.0.0"
     }
+
+# Mount React static build if available
+frontend_dist = BASE_DIR / "frontend" / "dist"
+if frontend_dist.exists():
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Don't intercept API routes
+        if full_path.startswith("api"):
+            return {"error": "Not Found"}
+        target_file = frontend_dist / full_path
+        if target_file.is_file():
+            return FileResponse(target_file)
+        return FileResponse(frontend_dist / "index.html")
 
 if __name__ == "__main__":
     import uvicorn
