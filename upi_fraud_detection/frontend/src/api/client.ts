@@ -89,6 +89,11 @@ export const api = {
     return res.json();
   },
 
+  async getActiveModel() {
+    const res = await fetch(`${BASE_URL}/prediction/active-model`);
+    return res.json();
+  },
+
   async getPresets() {
     const res = await fetch(`${BASE_URL}/prediction/presets`);
     return res.json();
@@ -133,12 +138,31 @@ export const api = {
     return res.json();
   },
 
+  async getAvailableModels() {
+    const res = await fetch(`${BASE_URL}/training/models`);
+    return res.json();
+  },
+
+  async setActiveModel(modelId: string) {
+    const res = await fetch(`${BASE_URL}/training/set-active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model_id: modelId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to set active model' }));
+      throw new Error(err.detail);
+    }
+    return res.json();
+  },
+
   // History Endpoints
-  async getHistory(params: { risk_category?: string; min_amount?: number; search_query?: string; page?: number; page_size?: number }) {
+  async getHistory(params: { risk_category?: string; min_amount?: number; search_query?: string; record_source?: string; page?: number; page_size?: number }) {
     const query = new URLSearchParams();
     if (params.risk_category) query.append('risk_category', params.risk_category);
     if (params.min_amount !== undefined) query.append('min_amount', params.min_amount.toString());
     if (params.search_query) query.append('search_query', params.search_query);
+    if (params.record_source) query.append('record_source', params.record_source);
     if (params.page) query.append('page', params.page.toString());
     if (params.page_size) query.append('page_size', params.page_size.toString());
 

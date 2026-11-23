@@ -9,6 +9,8 @@ import datetime
 
 from backend.state import state
 from src.pipeline_manager import predict_single_transaction
+from src.model_registry import registry
+from src.database import save_prediction_record
 
 router = APIRouter()
 
@@ -29,25 +31,65 @@ class TransactionInput(BaseModel):
     failed_attempts: int = 0
     old_balance: float = 25000.0
     new_balance: float = 22500.0
+    model_id: Optional[str] = None
+
+@router.get("/active-model")
+async def get_prediction_active_model():
+    """Returns the active model metadata used for live transaction inference."""
+    try:
+        _, _, meta = registry.load_model_and_preprocessor()
+        return {
+            "status": "success",
+            "active_model": meta
+        }
+    except Exception as e:
+        return {
+            "status": "warning",
+            "message": str(e),
+            "active_model": {"algorithm": "Random Forest", "version": "v1.0"}
+        }
 
 @router.post("/single")
 async def analyze_single_transaction(txn: TransactionInput):
     payload = txn.dict()
     try:
-        report = predict_single_transaction(payload)
+        report = predict_single_transaction(payload, model_id=txn.model_id)
         
-        # Save to evaluated history log
+        # Prepare genuine persistent transaction record
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        txn_id = f"TXN{datetime.datetime.now().strftime('%y%m%d%H%M%S%f')[:14]}"
+        
+        top_reason = "Verified Standard Pattern"
+        if report.get('rule_warnings'):
+            top_reason = report['rule_warnings'][0]['message']
+        elif report.get('model_attributions'):
+            top_reason = f"Primary driver: {report['model_attributions'][0]['feature']} ({report['model_attributions'][0]['direction_label']})"
+
         history_entry = {
-            'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'transaction_id': f"TXN{datetime.datetime.now().strftime('%M%S%f')[:8]}",
+            'timestamp': now_str,
+            'transaction_id': txn_id,
             'sender_id': txn.sender_id,
             'receiver_id': txn.receiver_id,
             'amount': txn.amount,
+            'transaction_type': txn.transaction_type,
+            'hour_of_day': txn.hour_of_day,
+            'fraud_probability': report.get('fraud_probability'),
+            'anomaly_score': report.get('components', {}).get('anomaly_score'),
             'risk_score': report['risk_score'],
             'risk_category': report['risk_category'],
-            'prediction_status': report['prediction_status'],
-            'top_reason': report['explanations'][0]['explanation'] if report['explanations'] else 'Normal Transaction'
+            'algorithm_used': report.get('active_algorithm', 'Random Forest'),
+            'model_version': report.get('model_version', 'v1.0'),
+            'prediction_result': report['prediction_status'],
+            'top_reason': top_reason,
+            'all_reasons': report.get('rule_warnings', []) + report.get('model_attributions', []),
+            'investigation_status': 'CLEARED' if report['risk_score'] <= 30 else ('REVIEW_PENDING' if report['risk_score'] <= 80 else 'BLOCKED_FRAUD'),
+            'is_cold_start': 1 if report.get('is_cold_start') else 0
         }
+        
+        # Save to SQLite permanent database
+        save_prediction_record(history_entry)
+        
+        # Backward compatibility in-memory
         state.evaluated_history.insert(0, history_entry)
         
         return {

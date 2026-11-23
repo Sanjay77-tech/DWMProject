@@ -6,7 +6,10 @@ import {
   Download, 
   ChevronLeft, 
   ChevronRight, 
-  RefreshCw
+  RefreshCw,
+  Database,
+  Cpu,
+  Layers
 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -18,6 +21,7 @@ export const TransactionHistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Filters
+  const [recordSource, setRecordSource] = useState<string>('all');
   const [riskCategory, setRiskCategory] = useState<string>('');
   const [minAmount, setMinAmount] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -29,6 +33,7 @@ export const TransactionHistoryPage: React.FC = () => {
         risk_category: riskCategory || undefined,
         min_amount: minAmount > 0 ? minAmount : undefined,
         search_query: searchQuery.trim() || undefined,
+        record_source: recordSource,
         page: currentPage,
         page_size: pageSize
       });
@@ -43,7 +48,7 @@ export const TransactionHistoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [currentPage, riskCategory, minAmount, searchQuery]);
+  }, [currentPage, recordSource, riskCategory, minAmount, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,22 +67,61 @@ export const TransactionHistoryPage: React.FC = () => {
             <FileText className="w-3.5 h-3.5" />
             <span>Forensic Audit & Ledger</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Evaluated Transaction Audit Ledger</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Persistent Transaction Audit Ledger</h1>
           <p className="text-slate-400 text-sm mt-1">
-            Historical transaction ledger scored and tagged by the multi-model fraud detection suite.
+            Genuine persistent transaction records stored in SQLite database, separating live model predictions from dataset ground-truth labels.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <a
-            href="/api/history/export"
-            download="upi_fraud_scored_audit.csv"
+            href={`/api/history/export-csv?record_source=${recordSource}`}
+            download="upi_fraud_audit_ledger.csv"
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-bold text-xs rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
-            <span>Export Scored Audit CSV</span>
+            <span>Export Persistent Audit CSV</span>
           </a>
         </div>
+      </div>
+
+      {/* Record Source Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-navy-700 pb-3">
+        <button
+          onClick={() => { setRecordSource('all'); setCurrentPage(1); }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            recordSource === 'all'
+              ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+              : 'text-slate-400 hover:text-white bg-navy-800/60'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>All Audit Records</span>
+        </button>
+
+        <button
+          onClick={() => { setRecordSource('predictions'); setCurrentPage(1); }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            recordSource === 'predictions'
+              ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+              : 'text-slate-400 hover:text-white bg-navy-800/60'
+          }`}
+        >
+          <Cpu className="w-3.5 h-3.5" />
+          <span>Live ML Predictions (SQLite)</span>
+        </button>
+
+        <button
+          onClick={() => { setRecordSource('dataset'); setCurrentPage(1); }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            recordSource === 'dataset'
+              ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+              : 'text-slate-400 hover:text-white bg-navy-800/60'
+          }`}
+        >
+          <Database className="w-3.5 h-3.5" />
+          <span>Dataset Transactions</span>
+        </button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -91,7 +135,7 @@ export const TransactionHistoryPage: React.FC = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="e.g. user_0042, TXN..."
+                placeholder="e.g. ananya.sharma, TXN..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-navy-900 border border-navy-700 rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
@@ -157,7 +201,7 @@ export const TransactionHistoryPage: React.FC = () => {
         <div className="p-4 border-b border-navy-700 flex items-center justify-between text-xs text-slate-400">
           <div>
             Showing <span className="font-semibold text-white">{records.length}</span> of{' '}
-            <span className="font-semibold text-white">{totalRecords.toLocaleString()}</span> matched records
+            <span className="font-semibold text-white">{totalRecords.toLocaleString()}</span> matched genuine records
           </div>
           {loading && (
             <div className="flex items-center gap-2 text-emerald-400 font-mono text-[11px]">
@@ -176,18 +220,20 @@ export const TransactionHistoryPage: React.FC = () => {
                 <th className="py-3 px-4">Counterparties (Sender → Receiver)</th>
                 <th className="py-3 px-4">Amount (₹)</th>
                 <th className="py-3 px-4">Risk Score</th>
-                <th className="py-3 px-4">Risk Category</th>
-                <th className="py-3 px-4">Primary Attribution Factor</th>
+                <th className="py-3 px-4">Status & Tier</th>
+                <th className="py-3 px-4">Algorithm / Source</th>
+                <th className="py-3 px-4">Forensic Attribution Reason</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-navy-700/60 font-mono text-[11px]">
               {records.length > 0 ? (
                 records.map((rec: any, idx: number) => {
                   const score = rec.risk_score || 0;
+                  const isLive = (rec.record_source === 'Live Model Prediction');
                   return (
                     <tr key={idx} className="hover:bg-navy-700/30 transition-colors">
                       <td className="py-3 px-4 text-slate-400 text-[10px] whitespace-nowrap">
-                        {rec.timestamp || '2026-11-20 09:30:00'}
+                        {rec.timestamp || '2026-11-23 10:00:00'}
                       </td>
                       <td className="py-3 px-4 text-white font-medium whitespace-nowrap">
                         {rec.transaction_id || `TXN${idx + 1000}`}
@@ -219,24 +265,33 @@ export const TransactionHistoryPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-sans whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          rec.risk_category?.includes('HIGH') || score >= 60
+                          rec.risk_category?.toUpperCase().includes('HIGH') || score >= 60
                             ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                            : rec.risk_category?.includes('MEDIUM') || score >= 30
+                            : rec.risk_category?.toUpperCase().includes('MEDIUM') || score >= 30
                             ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                             : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         }`}>
                           {rec.risk_category || (score >= 60 ? 'HIGH RISK' : 'LOW RISK')}
                         </span>
                       </td>
+                      <td className="py-3 px-4 font-sans whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                          isLive 
+                            ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                            : 'bg-slate-700/40 text-slate-300 border border-slate-600/40'
+                        }`}>
+                          {isLive ? `Live: ${rec.algorithm_used}` : 'Dataset Baseline'}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 font-sans text-slate-400 text-xs truncate max-w-xs">
-                        {rec.top_reason || 'Normal baseline velocity and transaction amounts.'}
+                        {rec.top_reason || 'Verified baseline cadence and expenditure.'}
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400 font-sans text-xs">
+                  <td colSpan={8} className="py-8 text-center text-slate-400 font-sans text-xs">
                     No transactions matched your current filters.
                   </td>
                 </tr>

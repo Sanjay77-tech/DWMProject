@@ -558,6 +558,18 @@ export const ModelTrainingPage: React.FC = () => {
       {/* Model Evaluation Results Section (Visible on Completion) */}
       {jobResult && (
         <div className="space-y-6 animate-fadeIn">
+          {/* Active Model Confirmation Banner */}
+          {jobResult.is_active_model && (
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs text-emerald-300 animate-fadeIn">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>{jobResult.algorithm}</strong> successfully registered and set as the <strong>Active Prediction Model</strong> ({jobResult.model_version}). Transaction Prediction will now evaluate using this pipeline.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Single Class / Small Sample Notice Banner */}
           {(jobResult.single_class_notice || (jobResult.metrics && jobResult.metrics.true_positives === 0 && jobResult.metrics.false_negatives === 0)) && (
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-200 text-xs">

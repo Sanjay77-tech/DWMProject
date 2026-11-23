@@ -1,0 +1,370 @@
+{
+  "active_model_id": "gradient_boosting",
+  "models": {
+    "random_forest": {
+      "model_id": "random_forest",
+      "algorithm": "Random Forest",
+      "paradigm": "Supervised Classification (Labelled)",
+      "model_file": "random_forest.pkl",
+      "preprocessor_file": "random_forest_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:34",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {
+        "n_estimators": 120,
+        "max_depth": 12
+      },
+      "metrics": {
+        "model_name": "Random Forest",
+        "accuracy": 0.9973,
+        "precision": 0.9375,
+        "recall": 1.0,
+        "f1_score": 0.9677,
+        "roc_auc": 0.9999,
+        "pr_auc": 0.9975,
+        "false_positive_rate": 0.0028,
+        "false_negative_rate": 0.0,
+        "true_positives": 45,
+        "false_positives": 3,
+        "true_negatives": 1077,
+        "false_negatives": 0,
+        "confusion_matrix": [
+          [
+            1077,
+            3
+          ],
+          [
+            0,
+            45
+          ]
+        ]
+      },
+      "version": "v_20261123_101934"
+    },
+    "gradient_boosting": {
+      "model_id": "gradient_boosting",
+      "algorithm": "Gradient Boosting",
+      "paradigm": "Supervised Classification (Labelled)",
+      "model_file": "gradient_boosting.pkl",
+      "preprocessor_file": "gradient_boosting_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:35",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {
+        "n_estimators": 80,
+        "learning_rate": 0.1,
+        "max_depth": 4
+      },
+      "metrics": {
+        "model_name": "Gradient Boosting",
+        "accuracy": 0.9964,
+        "precision": 0.9362,
+        "recall": 0.9778,
+        "f1_score": 0.9565,
+        "roc_auc": 0.9998,
+        "pr_auc": 0.9941,
+        "false_positive_rate": 0.0028,
+        "false_negative_rate": 0.0222,
+        "true_positives": 44,
+        "false_positives": 3,
+        "true_negatives": 1077,
+        "false_negatives": 1,
+        "confusion_matrix": [
+          [
+            1077,
+            3
+          ],
+          [
+            1,
+            44
+          ]
+        ]
+      },
+      "version": "v_20261123_101935"
+    },
+    "logistic_regression": {
+      "model_id": "logistic_regression",
+      "algorithm": "Logistic Regression",
+      "paradigm": "Supervised Classification (Labelled)",
+      "model_file": "logistic_regression.pkl",
+      "preprocessor_file": "logistic_regression_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:35",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {
+        "C": 1.0,
+        "max_iter": 1000
+      },
+      "metrics": {
+        "model_name": "Logistic Regression",
+        "accuracy": 0.4711,
+        "precision": 0.0536,
+        "recall": 0.7333,
+        "f1_score": 0.0998,
+        "roc_auc": 0.5714,
+        "pr_auc": 0.3562,
+        "false_positive_rate": 0.5398,
+        "false_negative_rate": 0.2667,
+        "true_positives": 33,
+        "false_positives": 583,
+        "true_negatives": 497,
+        "false_negatives": 12,
+        "confusion_matrix": [
+          [
+            497,
+            583
+          ],
+          [
+            12,
+            33
+          ]
+        ]
+      },
+      "version": "v_20261123_101935"
+    },
+    "isolation_forest": {
+      "model_id": "isolation_forest",
+      "algorithm": "Isolation Forest",
+      "paradigm": "One-Class Anomaly Detection (Trained on Normal Baselines)",
+      "model_file": "isolation_forest.pkl",
+      "preprocessor_file": "isolation_forest_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:36",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {
+        "contamination": 0.045,
+        "n_estimators": 100
+      },
+      "metrics": {
+        "model_name": "Isolation Forest",
+        "accuracy": 0.9209,
+        "precision": 0.3103,
+        "recall": 0.8,
+        "f1_score": 0.4472,
+        "roc_auc": 0.9481,
+        "pr_auc": 0.6663,
+        "false_positive_rate": 0.0741,
+        "false_negative_rate": 0.2,
+        "true_positives": 36,
+        "false_positives": 80,
+        "true_negatives": 1000,
+        "false_negatives": 9,
+        "confusion_matrix": [
+          [
+            1000,
+            80
+          ],
+          [
+            9,
+            36
+          ]
+        ]
+      },
+      "version": "v_20261123_101936"
+    },
+    "self_training": {
+      "model_id": "self_training",
+      "algorithm": "Self-Training Classifier",
+      "paradigm": "Semi-Supervised Learning (Partial Labels + Pseudo-Labelling)",
+      "model_file": "self_training.pkl",
+      "preprocessor_file": "self_training_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:38",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {
+        "threshold": 0.75,
+        "labeled_ratio": 0.15
+      },
+      "metrics": {
+        "model_name": "Self-Training Classifier",
+        "accuracy": 0.9893,
+        "precision": 0.8367,
+        "recall": 0.9111,
+        "f1_score": 0.8723,
+        "roc_auc": 0.9981,
+        "pr_auc": 0.9626,
+        "false_positive_rate": 0.0074,
+        "false_negative_rate": 0.0889,
+        "true_positives": 41,
+        "false_positives": 8,
+        "true_negatives": 1072,
+        "false_negatives": 4,
+        "confusion_matrix": [
+          [
+            1072,
+            8
+          ],
+          [
+            4,
+            41
+          ]
+        ]
+      },
+      "version": "v_20261123_101938"
+    },
+    "test_gradient_boosting": {
+      "model_id": "test_gradient_boosting",
+      "algorithm": "Gradient Boosting",
+      "paradigm": "Supervised Classification (Labelled)",
+      "model_file": "test_gradient_boosting.pkl",
+      "preprocessor_file": "test_gradient_boosting_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:38",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {
+        "n_estimators": 20,
+        "max_depth": 3
+      },
+      "metrics": {
+        "accuracy": 0.95
+      },
+      "version": "v_20261123_101938"
+    },
+    "test_rf_switch": {
+      "model_id": "test_rf_switch",
+      "algorithm": "Random Forest",
+      "paradigm": "Supervised Classification (Labelled)",
+      "model_file": "test_rf_switch.pkl",
+      "preprocessor_file": "test_rf_switch_preprocessor.pkl",
+      "trained_at": "2026-11-23 10:19:38",
+      "feature_names": [
+        "amount",
+        "user_avg_amount",
+        "amount_deviation",
+        "amount_ratio_avg",
+        "hour_of_day",
+        "is_unusual_hour",
+        "tx_count_5m",
+        "tx_count_30m",
+        "tx_count_24h",
+        "time_since_prev_tx_min",
+        "is_new_recipient",
+        "is_device_changed",
+        "is_location_changed",
+        "failed_attempts",
+        "balance_error",
+        "account_drain_ratio",
+        "is_transfer",
+        "is_cash_out"
+      ],
+      "feature_count": 18,
+      "hyperparameters": {},
+      "metrics": {},
+      "version": "v_20261123_101938"
+    }
+  }
+}

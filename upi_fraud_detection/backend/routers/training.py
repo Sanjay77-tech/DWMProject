@@ -21,6 +21,7 @@ from src.semi_supervised import create_semi_supervised_labels, train_self_traini
 from src.clustering import perform_kmeans_clustering, compute_pca_projection
 from src.evaluation import evaluate_classification_model, evaluate_multiple_models
 from src.pipeline_manager import get_model_paths
+from src.model_registry import registry
 
 router = APIRouter()
 
@@ -175,9 +176,32 @@ def execute_training_job(job_id: str, paradigm: str, algo: str, params: Dict[str
         job['progress'] = 100
         job['status'] = 'completed'
         job['logs'].append(f"Training completed successfully in {elapsed}s.")
+
+        # Register in Model Registry if not pure clustering
+        model_id = algo.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').strip('_')
+        is_clustering = (algo in ["K-Means Clustering", "K-Means"])
+        reg_entry = None
+
+        if not is_clustering and model is not None:
+            reg_entry = registry.register_model(
+                model_id=model_id,
+                algorithm_name=algo,
+                paradigm=paradigm,
+                model_obj=model,
+                preprocessor_obj=preprocessor,
+                feature_names=fcols,
+                hyperparameters=params,
+                metrics=eval_metrics,
+                set_active=True
+            )
+            job['logs'].append(f"✅ Registered '{algo}' in Model Registry. Set as Active Prediction Model (Version {reg_entry['version']}).")
+
         job['result'] = sanitize_json_val({
             "algorithm": algo,
             "paradigm": paradigm,
+            "model_id": model_id,
+            "is_active_model": (not is_clustering),
+            "model_version": reg_entry['version'] if reg_entry else "v1.0",
             "elapsed_seconds": elapsed,
             "metrics": eval_metrics,
             "single_class_notice": single_class_notice,
@@ -185,7 +209,7 @@ def execute_training_job(job_id: str, paradigm: str, algo: str, params: Dict[str
             "semi_supervised_stats": stats,
             "cluster_summary": cluster_summary,
             "pca_points": pca_points,
-            "model_saved_path": str(paths.get(algo.lower().replace(' ', '_'), 'models/'))
+            "model_saved_path": str(paths.get(model_id, f"models/{model_id}.pkl"))
         })
 
     except Exception as e:
@@ -294,3 +318,40 @@ async def run_benchmark_suite():
         return {"status": "success", "benchmark_table": records, "single_class_notice": single_class, "notice_message": notice}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Benchmark error: {str(e)}")
+
+class SetActiveModelRequest(BaseModel):
+    model_id: str
+
+@router.get("/models")
+async def list_registered_models():
+    """Lists all registered models in registry, including active flag and metrics."""
+    return {
+        "status": "success",
+        "active_model_id": registry.get_active_model_id(),
+        "models": registry.list_models()
+    }
+
+@router.post("/set-active")
+async def set_active_model(req: SetActiveModelRequest):
+    """Switches the active prediction model to a specified registered model."""
+    success = registry.set_active_model(req.model_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=f"Model '{req.model_id}' cannot be activated: missing artifacts or not found in registry.")
+    return {
+        "status": "success",
+        "message": f"Active prediction model switched to '{req.model_id}'.",
+        "active_model_id": req.model_id
+    }
+
+@router.get("/active-model")
+async def get_active_model():
+    """Returns the metadata of the currently active prediction model."""
+    try:
+        _, _, meta = registry.load_model_and_preprocessor()
+        return {
+            "status": "success",
+            "active_model": meta
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Active model not ready: {str(e)}")
+

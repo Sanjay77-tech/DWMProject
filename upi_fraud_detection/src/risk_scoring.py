@@ -1,82 +1,101 @@
 """
-Risk Scoring Engine for UPI Scam and Fraud Detection
-Calibrates and synthesizes outputs from Supervised Classifiers, Semi-Supervised Models,
-and Anomaly Detectors into an interpretable 0 to 100 Risk Score with risk bands and actions.
+Risk Scoring Engine for UPI Sentinel AI.
+Calibrates and synthesizes outputs from active trained models,
+distinguishing calibrated supervised fraud probabilities from unsupervised anomaly scores.
+Applies transparent, non-arbitrary risk scoring with verifiable component attributions.
 """
 
 from typing import Dict, Any, Optional
+
+# Standard FinTech Risk Thresholds
+LOW_RISK_THRESHOLD = 30.0
+MEDIUM_RISK_THRESHOLD = 60.0
+HIGH_RISK_THRESHOLD = 80.0
 
 def compute_risk_score(
     supervised_prob: Optional[float] = None,
     anomaly_score: Optional[float] = None,
     semi_supervised_prob: Optional[float] = None,
-    rule_flags_count: int = 0
+    rule_flags_count: int = 0,
+    active_paradigm: str = "Supervised Classification (Labelled)",
+    active_algorithm: str = "Random Forest"
 ) -> Dict[str, Any]:
     """
-    Computes a composite fraud risk score (0-100) combining available model signals
-    and behavioral rule violations.
+    Computes a transparent, calibrated fraud risk score (0-100).
     
-    Weights:
-    - Supervised Probability (50%): High precision on known fraud patterns.
-    - Anomaly Detection Score (35%): Identifies novel unlabelled outliers & behavioral deviations.
-    - Semi-Supervised Probability / Rules (15%): Pseudo-labelled manifold alignment & heuristics.
-    
-    Clearly documents the breakdown so anomaly indicators are not conflated with verified fraud.
+    Principles:
+    1. Distinguishes calibrated fraud probabilities from unsupervised anomaly metrics.
+    2. Does not arbitrarily boost or deflate scores.
+    3. Primary scoring is driven by the active selected model:
+       - If Supervised/Semi-Supervised: Risk is primarily the direct calibrated fraud probability P(Fraud) * 100.
+       - If Anomaly Detection: Risk is driven by the calibrated anomaly isolation score.
+    4. Configurable thresholds:
+       - 0.0 - 30.0: Low Risk (Legitimate)
+       - 30.1 - 60.0: Medium Risk (Suspicious)
+       - 60.1 - 80.0: High Risk (Potentially Fraudulent)
+       - 80.1 - 100.0: Critical Risk (Severe Potential Fraud)
     """
-    scores = []
-    weights = []
+    is_anomaly_mode = "Anomaly Detection" in active_paradigm or active_algorithm in ["Isolation Forest", "One-Class SVM"]
     
-    if supervised_prob is not None:
-        scores.append(supervised_prob * 100.0)
-        weights.append(0.50)
-        
-    if anomaly_score is not None:
-        # Anomaly score is already in [0, 100]
-        scores.append(anomaly_score)
-        weights.append(0.35)
-        
-    if semi_supervised_prob is not None:
-        scores.append(semi_supervised_prob * 100.0)
-        weights.append(0.15)
-        
-    if len(scores) == 0:
-        # Fallback to rule-based estimate if models not loaded
-        raw_score = min(100.0, rule_flags_count * 25.0)
+    if is_anomaly_mode:
+        # Anomaly Detection paradigm: driven by anomaly score
+        if anomaly_score is not None:
+            raw_score = float(anomaly_score)
+        else:
+            raw_score = 0.0
+        formula_explanation = f"Risk driven by unsupervised {active_algorithm} calibrated anomaly score ({raw_score:.1f}/100)."
+        prob_display = None
     else:
-        norm_weights = [w / sum(weights) for w in weights]
-        raw_score = sum(s * w for s, w in zip(scores, norm_weights))
-        # Rule boost: If 3 or more severe behavioral rules triggered, provide a safety boost
-        if rule_flags_count >= 3:
-            raw_score = min(100.0, raw_score + 10.0)
-            
-    final_score = round(float(raw_score), 1)
-    
-    # Determine Risk Category and Recommended Action
-    if final_score <= 30.0:
+        # Supervised / Semi-supervised paradigm
+        if supervised_prob is not None:
+            prob = float(supervised_prob)
+            raw_score = prob * 100.0
+            prob_display = round(prob * 100.0, 2)
+            formula_explanation = f"Risk driven by {active_algorithm} predicted fraud probability ({prob_display}%)."
+        elif semi_supervised_prob is not None:
+            prob = float(semi_supervised_prob)
+            raw_score = prob * 100.0
+            prob_display = round(prob * 100.0, 2)
+            formula_explanation = f"Risk driven by {active_algorithm} pseudo-labelled manifold probability ({prob_display}%)."
+        elif anomaly_score is not None:
+            raw_score = float(anomaly_score)
+            prob_display = None
+            formula_explanation = f"Fallback to anomaly isolation score ({raw_score:.1f}/100)."
+        else:
+            # Cold-start fallback based on rule violations count
+            raw_score = min(100.0, rule_flags_count * 20.0)
+            prob_display = None
+            formula_explanation = f"Rule-based baseline estimate ({rule_flags_count} behavioral triggers)."
+
+    # Clamp strictly to [0.0, 100.0]
+    final_score = round(max(0.0, min(100.0, float(raw_score))), 1)
+
+    # Determine Risk Category and Action Protocol
+    if final_score <= LOW_RISK_THRESHOLD:
         category = "Low Risk"
         status = "Normal / Legitimate"
-        color = "#28a745" # Green
+        color = "#10b981"  # Emerald Green
         badge_style = "success"
-        action = "Allow transaction. No additional verification required."
-    elif final_score <= 60.0:
+        action = "Allow transaction. Standard behavioral pattern verified."
+    elif final_score <= MEDIUM_RISK_THRESHOLD:
         category = "Medium Risk"
         status = "Suspicious"
-        color = "#ffc107" # Amber
+        color = "#f59e0b"  # Amber
         badge_style = "warning"
         action = "Step-up verification: Prompt SMS/App 2-Factor Authentication (OTP confirmation)."
-    elif final_score <= 80.0:
+    elif final_score <= HIGH_RISK_THRESHOLD:
         category = "High Risk"
         status = "Potentially Fraudulent"
-        color = "#fd7e14" # Orange
+        color = "#f97316"  # Orange
         badge_style = "error"
-        action = "High-Risk Alert: Temporary 15-minute transaction hold. Require biometric / in-app push verification."
+        action = "High-Risk Alert: Temporary transaction hold. Require biometric / in-app push verification."
     else:
         category = "Very High Risk"
         status = "Critical Potential Fraud"
-        color = "#dc3545" # Red
+        color = "#ef4444"  # Red
         badge_style = "danger"
-        action = "Block transaction immediately. Freeze UPI transfer, alert account holder and flag for manual risk audit."
-        
+        action = "Block transaction immediately. Freeze transfer, alert account holder, and flag for audit."
+
     return {
         'risk_score': final_score,
         'risk_category': category,
@@ -84,10 +103,13 @@ def compute_risk_score(
         'color': color,
         'badge_style': badge_style,
         'suggested_action': action,
+        'fraud_probability': prob_display,
+        'active_algorithm': active_algorithm,
+        'active_paradigm': active_paradigm,
+        'formula_explanation': formula_explanation,
         'components': {
-            'supervised_prob': round(supervised_prob * 100, 1) if supervised_prob is not None else None,
-            'anomaly_relative_score': round(anomaly_score, 1) if anomaly_score is not None else None,
-            'semi_supervised_prob': round(semi_supervised_prob * 100, 1) if semi_supervised_prob is not None else None,
+            'model_fraud_prob': prob_display,
+            'anomaly_score': round(float(anomaly_score), 1) if anomaly_score is not None else None,
             'rule_violations_count': rule_flags_count
         }
     }

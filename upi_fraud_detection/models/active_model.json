@@ -1,0 +1,60 @@
+{
+  "model_id": "gradient_boosting",
+  "algorithm": "Gradient Boosting",
+  "paradigm": "Supervised Classification (Labelled)",
+  "model_file": "gradient_boosting.pkl",
+  "preprocessor_file": "gradient_boosting_preprocessor.pkl",
+  "trained_at": "2026-11-23 10:19:35",
+  "feature_names": [
+    "amount",
+    "user_avg_amount",
+    "amount_deviation",
+    "amount_ratio_avg",
+    "hour_of_day",
+    "is_unusual_hour",
+    "tx_count_5m",
+    "tx_count_30m",
+    "tx_count_24h",
+    "time_since_prev_tx_min",
+    "is_new_recipient",
+    "is_device_changed",
+    "is_location_changed",
+    "failed_attempts",
+    "balance_error",
+    "account_drain_ratio",
+    "is_transfer",
+    "is_cash_out"
+  ],
+  "feature_count": 18,
+  "hyperparameters": {
+    "n_estimators": 80,
+    "learning_rate": 0.1,
+    "max_depth": 4
+  },
+  "metrics": {
+    "model_name": "Gradient Boosting",
+    "accuracy": 0.9964,
+    "precision": 0.9362,
+    "recall": 0.9778,
+    "f1_score": 0.9565,
+    "roc_auc": 0.9998,
+    "pr_auc": 0.9941,
+    "false_positive_rate": 0.0028,
+    "false_negative_rate": 0.0222,
+    "true_positives": 44,
+    "false_positives": 3,
+    "true_negatives": 1077,
+    "false_negatives": 1,
+    "confusion_matrix": [
+      [
+        1077,
+        3
+      ],
+      [
+        1,
+        44
+      ]
+    ]
+  },
+  "version": "v_20261123_101935"
+}
